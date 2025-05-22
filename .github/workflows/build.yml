@@ -15,9 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest] # Operating systems to test
-        node-version: [18, 20, 22]                      # Node.js versions to test
-        attempt: [1, 2, 3, 4, 5, 6, 7, 8, 9,10]         # Repeat tests 10 times
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [18, 20, 22]
+        attempt: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     steps:
       - name: Checkout code
@@ -27,6 +27,23 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+
+      - name: Add WPT host entries (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          echo "127.0.0.1 web-platform.test" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 www.web-platform.test" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 foo.web-platform.test" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 bar.web-platform.test" | sudo tee -a /etc/hosts
+
+      - name: Add WPT host entries (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "`n127.0.0.1 web-platform.test"
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "`n127.0.0.1 www.web-platform.test"
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "`n127.0.0.1 foo.web-platform.test"
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "`n127.0.0.1 bar.web-platform.test"
+        shell: pwsh
 
       - name: Install dependencies
         run: npm install
